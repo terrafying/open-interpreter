@@ -126,8 +126,6 @@ def handle_load_message(self, json_path):
 
     display_markdown_message(f"> messages json loaded from {os.path.abspath(json_path)}")
 
-<<<<<<< HEAD
-=======
 def handle_count_tokens(self, arguments):
     messages = [{"role": "system", "message": self.system_message}] + self.messages
 
