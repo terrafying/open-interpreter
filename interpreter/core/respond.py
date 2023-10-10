@@ -1,4 +1,5 @@
 from ..code_interpreters.create_code_interpreter import create_code_interpreter
+from ..rag.index_manager import get_doc_from_messages
 from ..utils.merge_deltas import merge_deltas
 from ..utils.get_user_info_string import get_user_info_string
 from ..utils.display_markdown_message import display_markdown_message
@@ -22,14 +23,17 @@ def respond(interpreter):
 
         # Open Procedures is an open-source database of tiny, up-to-date coding tutorials.
         # We can query it semantically and append relevant tutorials/procedures to our system message
-        get_relevant_procedures(interpreter.messages[-2:])
         if not interpreter.local:
             try:
                 system_message += "\n\n" + get_relevant_procedures(interpreter.messages[-2:])
             except:
                 # This can fail for odd SLL reasons. It's not necessary, so we can continue
                 pass
-
+            try:
+                system_message += "\n\n Additional context: " + get_doc_from_messages(interpreter.messages[-2:])
+            except:
+                print(traceback.format_exc())
+                print("Could not load context!")
         # Add user info to system_message, like OS, CWD, etc
         system_message += "\n\n" + get_user_info_string()
 
