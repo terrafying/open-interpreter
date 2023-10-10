@@ -1,5 +1,5 @@
+from .. import rag
 from ..code_interpreters.create_code_interpreter import create_code_interpreter
-from ..rag.index_manager import get_doc_from_messages
 from ..utils.merge_deltas import merge_deltas
 from ..utils.get_user_info_string import get_user_info_string
 from ..utils.display_markdown_message import display_markdown_message
@@ -7,7 +7,9 @@ from ..rag.get_relevant_procedures import get_relevant_procedures
 from ..utils.truncate_output import truncate_output
 import traceback
 import litellm
+from ..rag.index_manager import IndexManager
 
+im = IndexManager()
 
 def respond(interpreter):
     """
@@ -29,11 +31,11 @@ def respond(interpreter):
             except:
                 # This can fail for odd SLL reasons. It's not necessary, so we can continue
                 pass
-            try:
-                system_message += "\n\n Additional context: " + get_doc_from_messages(interpreter.messages[-2:])
-            except:
-                print(traceback.format_exc())
-                print("Could not load context!")
+        try:
+            system_message += "\n\n Additional context: " + im.get_doc_from_messages(interpreter.messages[-2:])
+        except:
+            print(traceback.format_exc())
+            print("Could not load context!")
         # Add user info to system_message, like OS, CWD, etc
         system_message += "\n\n" + get_user_info_string()
 

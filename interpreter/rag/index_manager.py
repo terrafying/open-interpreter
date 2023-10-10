@@ -1,25 +1,35 @@
+import sys
 
-from llama_index.node_parser import SimpleNodeParser
+from llama_index.node_parser import SimpleNodeParser, HierarchicalNodeParser
 
 from llama_index import VectorStoreIndex
 from llama_index import SimpleDirectoryReader
 from llama_index.schema import NodeWithScore
 
-parser = SimpleNodeParser.from_defaults()
 
-documents = SimpleDirectoryReader('./data').load_data()
+class IndexManager(object):
 
-index = VectorStoreIndex([])
-for doc in documents:
-    index.insert(doc)
+    def __new__(cls):
+        """ Make it a Singleton"""
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(IndexManager, cls).__new__(cls)
+        return cls.instance
+    def __init__(self):
+        self.node_parser = HierarchicalNodeParser.from_defaults()
 
-nodes = parser.get_nodes_from_documents(documents)
+        self.documents = SimpleDirectoryReader('./data', recursive=True).load_data()
 
-def insert_document(doc):
-    index.insert(doc)
+        self.index = VectorStoreIndex([])
+        for doc in self.documents:
+            self.index.insert(doc)
 
-def get_doc_from_messages(messages):
-    retriever = index.as_retriever()
-    retrieved_nodes: list[NodeWithScore] = retriever.retrieve(messages[-1]['message'])
+        self.nodes = self.node_parser.get_nodes_from_documents(self.documents)
 
-    return '\n'.join([node.text for node in retrieved_nodes])
+    def insert_document(self, doc):
+        self.index.insert(doc)
+
+    def get_doc_from_messages(self, messages):
+        retriever = self.index.as_retriever()
+        retrieved_nodes: list[NodeWithScore] = retriever.retrieve(messages[-1]['message'])
+
+        return '\n'.join([node.text for node in retrieved_nodes])
