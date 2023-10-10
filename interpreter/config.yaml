@@ -15,3 +15,7 @@ system_message: |
 local: false
 model: "gpt-4"
 temperature: 0
+plugins:
+  - browse
+  - chatgpt-retrieval-plugin
+debug: true

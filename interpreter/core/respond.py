@@ -7,6 +7,7 @@ from ..utils.truncate_output import truncate_output
 import traceback
 import litellm
 
+
 def respond(interpreter):
     """
     Yields tokens, but also adds them to interpreter.messages. TBH probably would be good to seperate those two responsibilities someday soon
@@ -18,7 +19,7 @@ def respond(interpreter):
         ### PREPARE MESSAGES ###
 
         system_message = interpreter.system_message
-        
+
         # Open Procedures is an open-source database of tiny, up-to-date coding tutorials.
         # We can query it semantically and append relevant tutorials/procedures to our system message
         get_relevant_procedures(interpreter.messages[-2:])
@@ -28,7 +29,7 @@ def respond(interpreter):
             except:
                 # This can fail for odd SLL reasons. It's not necessary, so we can continue
                 pass
-        
+
         # Add user info to system_message, like OS, CWD, etc
         system_message += "\n\n" + get_user_info_string()
 
@@ -44,7 +45,6 @@ def respond(interpreter):
             if "output" in message and message["output"] == "":
                 message["output"] = "No output"
 
-
         ### RUN THE LLM ###
 
         # Add a new message from the assistant to interpreter's "messages" attribute
@@ -55,7 +55,6 @@ def respond(interpreter):
         # + yielding chunks to the user
         try:
             for chunk in interpreter._llm(messages_for_llm):
-
                 # Add chunk to the last message
                 interpreter.messages[-1] = merge_deltas(interpreter.messages[-1], chunk)
 
@@ -76,16 +75,15 @@ def respond(interpreter):
         except Exception as e:
             if 'auth' in str(e).lower() or 'api key' in str(e).lower():
                 output = traceback.format_exc()
-                raise Exception(f"{output}\n\nThere might be an issue with your API key(s).\n\nTo reset your API key (we'll use OPENAI_API_KEY for this example, but you may need to reset your ANTHROPIC_API_KEY, HUGGINGFACE_API_KEY, etc):\n        Mac/Linux: 'export OPENAI_API_KEY=your-key-here',\n        Windows: 'setx OPENAI_API_KEY your-key-here' then restart terminal.\n\n")
+                raise Exception(
+                    f"{output}\n\nThere might be an issue with your API key(s).\n\nTo reset your API key (we'll use OPENAI_API_KEY for this example, but you may need to reset your ANTHROPIC_API_KEY, HUGGINGFACE_API_KEY, etc):\n        Mac/Linux: 'export OPENAI_API_KEY=your-key-here',\n        Windows: 'setx OPENAI_API_KEY your-key-here' then restart terminal.\n\n")
             else:
                 raise
-        
-        
-        
-        ### RUN CODE (if it's there) ###
+
+        # RUN CODE (if it's there)
 
         if "code" in interpreter.messages[-1]:
-            
+
             if interpreter.debug_mode:
                 print("Running code:", interpreter.messages[-1])
 

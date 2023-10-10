@@ -43,6 +43,7 @@ class Interpreter:
         self.temperature = 0
         self.system_message = ""
         self.context_window = None
+        self.plugins = {}
         self.max_tokens = None
         self.api_base = None
         self.api_key = None

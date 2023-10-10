@@ -16,7 +16,7 @@ def setup_openai_coding_llm(interpreter):
     functions = extend_functions(interpreter)
 
     def coding_llm(messages):
-        
+
         # Convert messages
         messages = convert_to_openai_messages(messages)
 
@@ -33,7 +33,8 @@ def setup_openai_coding_llm(interpreter):
             messages = tt.trim(messages=messages, system_message=system_message, model=interpreter.model)
         except:
             if interpreter.context_window:
-                messages = tt.trim(messages=messages, system_message=system_message, max_tokens=interpreter.context_window)
+                messages = tt.trim(messages=messages, system_message=system_message,
+                                   max_tokens=interpreter.context_window)
             else:
                 display_markdown_message("""
                 **We were unable to determine the context window of this model.** Defaulting to 3000.
@@ -61,7 +62,7 @@ def setup_openai_coding_llm(interpreter):
             params["max_tokens"] = interpreter.max_tokens
         if interpreter.temperature:
             params["temperature"] = interpreter.temperature
-        
+
         # These are set directly on LiteLLM
         if interpreter.max_budget:
             litellm.max_budget = interpreter.max_budget
@@ -93,8 +94,8 @@ def setup_openai_coding_llm(interpreter):
             if "content" in delta and delta["content"]:
                 yield {"message": delta["content"]}
 
-            if ("function_call" in accumulated_deltas 
-                and "arguments" in accumulated_deltas["function_call"]):
+            if ("function_call" in accumulated_deltas
+                    and "arguments" in accumulated_deltas["function_call"]):
 
                 arguments = accumulated_deltas["function_call"]["arguments"]
                 arguments = parse_partial_json(arguments)
@@ -104,12 +105,12 @@ def setup_openai_coding_llm(interpreter):
 
                     if accumulated_deltas["function_call"]["name"] == "execute":
                         if (language is None
-                            and "language" in arguments
-                            and "code" in arguments # <- This ensures we're *finished* typing language, as opposed to partially done
-                            and arguments["language"]):
+                                and "language" in arguments
+                                and "code" in arguments  # <- This ensures we're *finished* typing language, as opposed to partially done
+                                and arguments["language"]):
                             language = arguments["language"]
                             yield {"language": language}
-                        
+
                         if language is not None and "code" in arguments:
                             # Calculate the delta (new characters only)
                             code_delta = arguments["code"][len(code):]
@@ -120,7 +121,8 @@ def setup_openai_coding_llm(interpreter):
                                 yield {"code": code_delta}
 
         # execute plugin function if we have one
-        if "function_call" in accumulated_deltas and accumulated_deltas["function_call"]["name"] != "execute" and accumulated_deltas["function_call"]["name"] in interpreter.functions:
+        if "function_call" in accumulated_deltas and accumulated_deltas["function_call"]["name"] != "execute" and \
+                accumulated_deltas["function_call"]["name"] in interpreter.functions:
             # Execute the function
             function_name = accumulated_deltas["function_call"]["name"]
             parameters = accumulated_arguments
@@ -129,6 +131,8 @@ def setup_openai_coding_llm(interpreter):
 
             # Yield the result
             if results:
-                yield { "message": results }
+                # TODO: Integrate results of function call so that LLM responds based on context gathered from
+                #  function's execution
+                yield {"message": results}
 
     return coding_llm
