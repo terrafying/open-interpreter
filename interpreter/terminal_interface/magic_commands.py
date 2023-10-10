@@ -1,4 +1,5 @@
 from ..utils.display_markdown_message import display_markdown_message
+from ..utils.count_tokens import count_messages_tokens
 import json
 import os
 
@@ -36,26 +37,32 @@ def handle_undo(self, arguments):
 
 
 def handle_load_context(self, arguments):
-    """ Use this command to load a context from a JSON file """
+    """ Use this command to load """
     pass
 
 
 def handle_docs(self, module):
     """ Fetch python docs for a module, then load into context """
     # Use pydoc to get module docs
-    import pydoc
-    pydoc.help(module)
+    if module.startswith('http'):
+        # TODO: Scrape docs from website
+        print("Scraping docs from website: NOT IMPLEMENTED")
+        pass
+    else:
+        import pydoc
+        pydoc.help(module)
 
 
 def handle_help(self, arguments):
     commands_description = {
-        "%debug [true/false]": "Toggle debug mode. Without arguments or with 'true', it enters debug mode. With 'false', it exits debug mode.",
-        "%reset": "Resets the current session.",
-        "%undo": "Remove previous messages and its response from the message history.",
-        "%save_message [path]": "Saves messages to a specified JSON path. If no path is provided, it defaults to 'messages.json'.",
-        "%load_message [path]": "Loads messages from a specified JSON path. If no path is provided, it defaults to 'messages.json'.",
-        "%docs [module]": "Fetch python docs for a module, then load into context.",
-        "%help": "Show this help message.",
+      "%debug [true/false]": "Toggle debug mode. Without arguments or with 'true', it enters debug mode. With 'false', it exits debug mode.",
+      "%reset": "Resets the current session.",
+      "%undo": "Remove previous messages and its response from the message history.",
+      "%save_message [path]": "Saves messages to a specified JSON path. If no path is provided, it defaults to 'messages.json'.",
+      "%load_message [path]": "Loads messages from a specified JSON path. If no path is provided, it defaults to 'messages.json'.",
+      "%tokens": "Show the tokens used by the current conversation's messages. **Note**: this will not take into account tokens that have already been used and then removed from the conversation with `%undo`.",
+      "%docs [module]": "Fetch docs for a python module, then load into context.",
+      "%help": "Show this help message.",
     }
 
     base_message = [
@@ -119,6 +126,17 @@ def handle_load_message(self, json_path):
 
     display_markdown_message(f"> messages json loaded from {os.path.abspath(json_path)}")
 
+<<<<<<< HEAD
+=======
+def handle_count_tokens(self, arguments):
+    messages = [{"role": "system", "message": self.system_message}] + self.messages
+
+    if len(self.messages) == 0:
+      (tokens, cost) = count_messages_tokens(messages=messages, model=self.model)
+      display_markdown_message(f"> System Prompt Tokens: {tokens} (${cost})")
+    else:
+      (tokens, cost) = count_messages_tokens(messages=messages, model=self.model)
+      display_markdown_message(f"> Conversation Tokens: {tokens} (${cost})")
 
 def handle_magic_command(self, user_input):
     # split the command into the command and the arguments, by the first whitespace
@@ -132,6 +150,7 @@ def handle_magic_command(self, user_input):
         "doc": handle_docs,
         "load_context": handle_load_context,
         "undo": handle_undo,
+        "tokens": handle_count_tokens,
     }
 
     user_input = user_input[1:].strip()  # Capture the part after the `%`
