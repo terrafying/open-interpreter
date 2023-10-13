@@ -9,13 +9,16 @@ import traceback
 import litellm
 from ..rag.index_manager import IndexManager
 
-im = IndexManager()
+# im = IndexManager()
 
 def respond(interpreter):
     """
     Yields tokens, but also adds them to interpreter.messages. TBH probably would be good to seperate those two responsibilities someday soon
     Responds until it decides not to run any more code or say anything else.
     """
+
+    # Save plugin's output so we can use it as context for the next iteration
+    plugin_output = ""
 
     while True:
 
@@ -31,11 +34,20 @@ def respond(interpreter):
             except:
                 # This can fail for odd SLL reasons. It's not necessary, so we can continue
                 pass
-        try:
-            system_message += "\n\n Additional context: " + im.get_doc_from_messages(interpreter.messages[-2:])
-        except:
-            print(traceback.format_exc())
-            print("Could not load context!")
+
+        plugin_output = IndexManager().pop_stored_message()
+        # Add plugin output to system message
+        if plugin_output:
+            system_message += "\n\n Here is additional context from the last function execution.  DO NOT call a function again! Additional context: " + plugin_output
+        else:
+            pass
+            # try:
+            #     system_message += "\n\n Additional context: " + im.get_doc_from_messages(interpreter.messages[-2:])
+            # except:
+            #     print(traceback.format_exc())
+            #     print("Could not load context!")
+
+
         # Add user info to system_message, like OS, CWD, etc
         system_message += "\n\n" + get_user_info_string()
 

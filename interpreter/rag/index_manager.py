@@ -14,10 +14,15 @@ class IndexManager(object):
         if not hasattr(cls, 'instance'):
             cls.instance = super(IndexManager, cls).__new__(cls)
         return cls.instance
-    def __init__(self):
-        self.node_parser = HierarchicalNodeParser.from_defaults()
 
-        self.documents = SimpleDirectoryReader('./data', recursive=True).load_data()
+    def __init__(self):
+        self.stored_message = ""
+
+    def example(self):
+        # Populate data with some example stuff
+        self.node_parser = SimpleNodeParser.from_defaults()
+
+        self.documents = SimpleDirectoryReader('./docs', recursive=True).load_data()
 
         self.index = VectorStoreIndex([])
         for doc in self.documents:
@@ -27,6 +32,17 @@ class IndexManager(object):
 
     def insert_document(self, doc):
         self.index.insert(doc)
+
+    def get_stored_message(self):
+        return self.stored_message
+
+    def pop_stored_message(self):
+        s = self.stored_message
+        self.stored_message = ""
+        return s
+
+    def set_stored_message(self, message):
+        self.stored_message = message
 
     def get_doc_from_messages(self, messages):
         retriever = self.index.as_retriever()

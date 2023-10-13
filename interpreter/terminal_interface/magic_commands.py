@@ -1,3 +1,4 @@
+from ..rag.index_manager import IndexManager
 from ..utils.display_markdown_message import display_markdown_message
 from ..utils.count_tokens import count_messages_tokens
 import json
@@ -35,9 +36,10 @@ def handle_undo(self, arguments):
 
     print("")  # Aesthetics.
 
-
 def handle_load_context(self, arguments):
     """ Use this command to load """
+    im = IndexManager()
+    im.set_stored_message()
     pass
 
 
@@ -144,7 +146,6 @@ def handle_magic_command(self, user_input):
         "reset": handle_reset,
         "save_message": handle_save_message,
         "load_message": handle_load_message,
-        "docs": handle_docs,
         "doc": handle_docs,
         "load_context": handle_load_context,
         "undo": handle_undo,

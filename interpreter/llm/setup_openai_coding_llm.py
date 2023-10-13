@@ -1,4 +1,6 @@
 import litellm
+
+from ..rag.llamaindexmanager import LlamaIndexManager
 from ..utils.merge_deltas import merge_deltas
 from ..utils.parse_partial_json import parse_partial_json
 from ..utils.convert_to_openai_messages import convert_to_openai_messages
@@ -6,6 +8,7 @@ from ..utils.display_markdown_message import display_markdown_message
 from ..plugins.function_manager import extend_functions
 import tokentrim as tt
 
+from ..rag.index_manager import IndexManager
 
 def setup_openai_coding_llm(interpreter):
     """
@@ -96,7 +99,8 @@ def setup_openai_coding_llm(interpreter):
 
             if ("function_call" in accumulated_deltas
                     and "arguments" in accumulated_deltas["function_call"]):
-
+                if interpreter.debug_mode:
+                    print("function_call\t -- Accumulated deltas:", str(accumulated_deltas))
                 arguments = accumulated_deltas["function_call"]["arguments"]
                 arguments = parse_partial_json(arguments)
 
@@ -120,19 +124,32 @@ def setup_openai_coding_llm(interpreter):
                             if code_delta:
                                 yield {"code": code_delta}
 
-        # execute plugin function if we have one
+        # # execute plugin function if we have one
         if "function_call" in accumulated_deltas and accumulated_deltas["function_call"]["name"] != "execute" and \
                 accumulated_deltas["function_call"]["name"] in interpreter.functions:
+            if interpreter.debug_mode:
+                print(f"\nArguments: {str(arguments)}")
+                print("function_call\t -- Accumulated deltas:", str(accumulated_deltas))
             # Execute the function
             function_name = accumulated_deltas["function_call"]["name"]
             parameters = accumulated_arguments
             function = interpreter.functions[function_name]
             results = function(function_name=function_name, parameters=parameters)
 
-            # Yield the result
-            if results:
-                # TODO: Integrate results of function call so that LLM responds based on context gathered from
-                #  function's execution
-                yield {"message": results}
+            IndexManager().set_stored_message(results)
+            if interpreter.debug_mode:
+                print("Storing function output: ", results)
+
+            display_markdown_message("Storing function output: ```" + str(results) + "```")
+
+            # params['messages'].append({"message": results, "role": "system"})
+            # Exclude this function from the next params... HACKHACKHACK
+            # params['functions'] = [f for f in params['functions'] if f['name'] != function_name]
+
+            interpreter.messages.append({"message": results, "role": "system"})
+
+            yield {"output": results}
+
+
 
     return coding_llm

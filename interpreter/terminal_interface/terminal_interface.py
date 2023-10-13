@@ -141,7 +141,9 @@ def terminal_interface(interpreter, message):
                 if "output" in chunk:
                     ran_code_block = True
                     render_cursor = False
-                    active_block.output += "\n" + chunk["output"]
+                    if not active_block:
+                        active_block = CodeBlock()
+                    active_block.output += f"\n```\n{chunk['output']}\n```"
                     active_block.output = active_block.output.strip() # <- Aesthetic choice
                     
                     # Truncate output

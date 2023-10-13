@@ -1,4 +1,4 @@
-from ..llm.functions.schema import function_schema
+from ..llm.functions.schema import function_schemas
 
 
 def extend_functions(interpreter):
@@ -6,8 +6,6 @@ def extend_functions(interpreter):
     Extend the base Open Interpreter function schema with functions provided by
     external plugins the user has installed.
     """
-
-    function_schemas = [function_schema]
 
     for plugin in interpreter.plugins:
         if interpreter.debug_mode:
